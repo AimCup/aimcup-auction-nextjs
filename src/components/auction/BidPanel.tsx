@@ -31,8 +31,16 @@ export function BidPanel({
 
 	const minNext =
 		live.highestBid > 0 ? live.highestBid + minIncrement : minIncrement;
+	const currentPlayerId = live.currentPlayer?.id ?? null;
 	const [amount, setAmount] = useState(minNext);
 
+	// When a new player comes up for bidding, reset the input back to the opening minimum
+	// (otherwise it keeps the amount from the previous player, e.g. a 9000 max bid).
+	useEffect(() => {
+		setAmount(minIncrement);
+	}, [currentPlayerId, minIncrement]);
+
+	// While bidding on the same player, keep the field at or above the next legal bid.
 	useEffect(() => {
 		setAmount((a) => (a < minNext ? minNext : a));
 	}, [minNext]);

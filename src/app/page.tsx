@@ -45,12 +45,10 @@ export default function HomePage() {
 	return (
 		<div className="mx-auto max-w-[1600px] px-5 py-10">
 			{/* Hero */}
-			<section className="relative overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-tuned to-deepCharcoal px-8 py-14">
-				<div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-deepRed/20 blur-3xl" />
-				<div className="absolute -bottom-24 left-10 h-72 w-72 rounded-full bg-mintGreen/10 blur-3xl" />
-				<div className="relative max-w-2xl">
+			<section className="overflow-hidden rounded-3xl border border-white/5 bg-tuned px-8 py-14">
+				<div className="max-w-2xl">
 					<h1 className="text-4xl font-black leading-tight sm:text-5xl">
-						Live player <span className="text-gradient">auctions</span> for your
+						Live player <span className="text-deepRed">auctions</span> for
 						tournament
 					</h1>
 					<p className="mt-4 text-lg text-white/60">
