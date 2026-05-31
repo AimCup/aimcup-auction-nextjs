@@ -247,8 +247,16 @@ export default function PlayersPage() {
 							<FiUpload /> Import from CSV
 						</h2>
 						<p className="text-xs text-white/40">
-							Columns: <code className="text-mintGreen">username, osuId, description</code>{" "}
-							(header optional).
+							Columns:{" "}
+							<code className="text-mintGreen">
+								username, osuId, description, qualificationRank, bestBeatmapUrl,
+								bestBeatmapAccuracy, worstBeatmapUrl, worstBeatmapAccuracy
+							</code>{" "}
+							(header optional).{" "}
+							<span className="text-white/60">
+								username, osuId and qualificationRank are required
+							</span>
+							; the rest may be left empty.
 						</p>
 						<input
 							type="file"
@@ -259,7 +267,9 @@ export default function PlayersPage() {
 						<textarea
 							value={csv}
 							onChange={(e) => setCsv(e.target.value)}
-							placeholder={"username,osuId,description\nCookiezi,124493,insane aim"}
+							placeholder={
+								"username,osuId,description,qualificationRank,bestBeatmapUrl,bestBeatmapAccuracy,worstBeatmapUrl,worstBeatmapAccuracy\nCookiezi,124493,insane aim,1,https://osu.ppy.sh/beatmaps/5468482,98.52,https://osu.ppy.sh/beatmaps/5001883,91.20"
+							}
 							className="h-24 resize-none rounded-lg border border-white/10 bg-deepCharcoal px-3 py-2 font-mono text-xs outline-none focus:border-mintGreen"
 						/>
 						<button
