@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: ./build.Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: https://api.auction.aimcup.xyz
+        NEXT_PUBLIC_API_URL: https://auction-api.aimcup.xyz
     restart: always
     ports:
       - "3100:3000"

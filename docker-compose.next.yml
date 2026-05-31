@@ -1,4 +1,4 @@
-# Test ("next") frontend for next.auction.aimcup.xyz. Published on host port 3101 -> container 3000.
+# Test ("next") frontend for auction-next.aimcup.xyz. Published on host port 3101 -> container 3000.
 services:
   aimcup-auction-frontend-next:
     container_name: aimcup-auction-frontend-next
@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: ./build.next.Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: https://next.api.auction.aimcup.xyz
+        NEXT_PUBLIC_API_URL: https://api-next-auction.aimcup.xyz
     restart: always
     ports:
       - "3101:3000"
