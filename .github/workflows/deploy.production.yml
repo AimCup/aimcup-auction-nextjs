@@ -1,0 +1,20 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare production stack
+        run: |
+          docker compose -p aimcup-auction-frontend-prod -f docker-compose.yml down --remove-orphans || true
+          docker rm -f aimcup-auction-frontend 2>/dev/null || true
+
+      - name: Build and deploy to Production
+        run: docker compose -p aimcup-auction-frontend-prod -f docker-compose.yml up -d --build

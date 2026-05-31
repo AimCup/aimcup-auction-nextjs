@@ -1,0 +1,25 @@
+# Production image for auction.aimcup.xyz.
+# NEXT_PUBLIC_API_URL is a build-time, browser-exposed value (the API origin); it is baked into the
+# bundle during `next build`, so it is passed as a build arg (non-secret) by docker-compose.
+FROM node:20-alpine AS builder
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+# Bind on all interfaces so the published port is reachable from outside the container.
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+EXPOSE 3000
+CMD ["node", "server.js"]

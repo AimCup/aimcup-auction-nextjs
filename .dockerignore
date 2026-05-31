@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.github
+.idea
+*.tsbuildinfo
+npm-debug.log*
+.DS_Store
+*.Dockerfile
+docker-compose*.yml
+.dockerignore
+README.md
+# Exclude local env so only the build-arg NEXT_PUBLIC_API_URL is baked into the bundle.
+.env
+.env.*

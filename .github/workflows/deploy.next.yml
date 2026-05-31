@@ -1,0 +1,22 @@
+name: Deploy to Next
+
+on:
+  push:
+    branches: [ "next" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare next stack
+        run: |
+          docker compose -p aimcup-auction-frontend-next -f docker-compose.next.yml down --remove-orphans || true
+          docker rm -f aimcup-auction-frontend-next 2>/dev/null || true
+
+      - name: Build and deploy to Next
+        run: docker compose -p aimcup-auction-frontend-next -f docker-compose.next.yml up -d --build
