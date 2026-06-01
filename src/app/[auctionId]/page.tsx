@@ -144,12 +144,15 @@ export default function PublicAuctionPage() {
 									paused
 								/>
 							)}
-							<CurrentPlayerCard
-								auctionId={auctionId}
-								auction={auction}
-								live={live}
-								myCaptain={myCaptain}
-							/>
+							{/* Keep the player + bid controls pinned while scrolling through the teams below. */}
+							<div className="sticky top-20 z-30">
+								<CurrentPlayerCard
+									auctionId={auctionId}
+									auction={auction}
+									live={live}
+									myCaptain={myCaptain}
+								/>
+							</div>
 							<TeamsList captains={captains} players={players} />
 						</>
 					)}
@@ -188,6 +191,7 @@ export default function PublicAuctionPage() {
 						highestBidderId={live?.highestBidderId ?? null}
 						showBalance={running || finished}
 						showReady={scheduled || paused}
+						currentOsuId={user?.osuId ?? null}
 					/>
 				</div>
 			</div>

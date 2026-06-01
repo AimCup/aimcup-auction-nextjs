@@ -12,20 +12,33 @@ export function CaptainList({
 	highestBidderId,
 	showBalance,
 	showReady,
+	currentOsuId,
 }: {
 	captains: Captain[];
 	onlineOsuIds: number[];
 	highestBidderId: string | null;
 	showBalance: boolean;
 	showReady?: boolean;
+	currentOsuId?: number | null;
 }) {
 	const online = new Set(onlineOsuIds);
+	// While confirming readiness (before start / during pause): pin the viewing captain to the very
+	// top, then float ready captains above not-ready ones. The cards animate via framer-motion layout.
+	const displayed = showReady
+		? [...captains].sort((a, b) => {
+				const aSelf = currentOsuId != null && a.osuId === currentOsuId;
+				const bSelf = currentOsuId != null && b.osuId === currentOsuId;
+				if (aSelf !== bSelf) return aSelf ? -1 : 1;
+				if (a.ready !== b.ready) return a.ready ? -1 : 1;
+				return 0;
+			})
+		: captains;
 	return (
 		<div className="flex flex-col gap-2">
 			<h3 className="px-1 text-xs font-semibold uppercase tracking-widest text-white/40">
 				Captains ({captains.length})
 			</h3>
-			{captains.map((c) => {
+			{displayed.map((c) => {
 				const leading = highestBidderId === c.id;
 				return (
 					<motion.div

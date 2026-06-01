@@ -98,7 +98,7 @@ export function CurrentPlayerCard({
 										</div>
 									</div>
 									{player.description && (
-										<p className="mt-4 max-w-prose text-sm leading-relaxed text-white/70">
+										<p className="mt-4 max-w-prose rounded-lg bg-deepCharcoal/70 px-3 py-2 text-sm leading-relaxed text-white/85 backdrop-blur-sm">
 											{player.description}
 										</p>
 									)}
@@ -132,6 +132,7 @@ export function CurrentPlayerCard({
 						myCaptain={myCaptain}
 						maxBid={auction.settings.maxBid}
 						minIncrement={auction.settings.minIncrement}
+						maxTeamSize={auction.settings.maxTeamSize}
 					/>
 				</div>
 			</div>
@@ -173,8 +174,8 @@ function QualifierStats({ player }: { player: Player }) {
 	return (
 		<div className="mt-4 flex flex-col gap-2">
 			{player.qualificationRank != null && (
-				<div className="flex items-center gap-2 text-sm">
-					<span className="rounded-md bg-mintGreen/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-mintGreen">
+				<div className="flex w-fit items-center gap-2 rounded-lg bg-deepCharcoal/70 px-2.5 py-1.5 text-sm backdrop-blur-sm">
+					<span className="rounded-md bg-mintGreen/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-mintGreen">
 						Qualifier rank
 					</span>
 					<span className="font-bold text-white">
@@ -218,7 +219,7 @@ function QualMapRow({
 	accuracy: string;
 }) {
 	return (
-		<div className="flex items-center gap-3 rounded-lg border border-white/10 bg-deepCharcoal/50 p-2">
+		<div className="flex items-center gap-3 rounded-lg border border-white/10 bg-deepCharcoal/70 p-2 backdrop-blur-sm">
 			{image ? (
 				// eslint-disable-next-line @next/next/no-img-element
 				<img

@@ -57,7 +57,15 @@ export default function SettingsPage() {
 
 	useEffect(() => {
 		if (auction) {
-			setSettings(auction.settings);
+			// Legacy auctions saved before maxTeamSize existed come back as 0 (unlimited); show a
+			// sensible, valid default in the form so it can be saved.
+			setSettings({
+				...auction.settings,
+				maxTeamSize:
+					auction.settings.maxTeamSize > 0
+						? auction.settings.maxTeamSize
+						: Math.max(8, auction.settings.teamSizeForPercentLimit),
+			});
 			setStages(auction.stages);
 			setMeta({
 				banner: auction.banner ?? "",
@@ -166,6 +174,12 @@ export default function SettingsPage() {
 						label="Max description length"
 						value={settings.maxDescriptionLength}
 						onChange={(v) => patch("maxDescriptionLength", v)}
+					/>
+					<NumberField
+						label="Maximum team size"
+						hint="A captain can’t bid once their roster reaches this (≥ the % cap roster size)"
+						value={settings.maxTeamSize}
+						onChange={(v) => patch("maxTeamSize", v)}
 					/>
 				</fieldset>
 				{editable && (

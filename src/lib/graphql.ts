@@ -64,6 +64,7 @@ export const AUCTION_FIELDS = gql`
 			teamSizeForPercentLimit
 			maxBidPercent
 			maxDescriptionLength
+			maxTeamSize
 		}
 		stages {
 			index

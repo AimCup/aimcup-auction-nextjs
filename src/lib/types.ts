@@ -11,6 +11,7 @@ export interface AuctionSettings {
 	teamSizeForPercentLimit: number;
 	maxBidPercent: number;
 	maxDescriptionLength: number;
+	maxTeamSize: number;
 }
 
 export interface AuctionStage {

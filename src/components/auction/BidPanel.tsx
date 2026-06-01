@@ -18,12 +18,14 @@ export function BidPanel({
 	myCaptain,
 	maxBid,
 	minIncrement,
+	maxTeamSize,
 }: {
 	auctionId: string;
 	live: LiveAuctionState;
 	myCaptain: Captain | null;
 	maxBid: number;
 	minIncrement: number;
+	maxTeamSize: number;
 }) {
 	const toast = useToast();
 	const [placeBid, { loading: bidding }] = useMutation(PLACE_BID);
@@ -45,7 +47,11 @@ export function BidPanel({
 		setAmount((a) => (a < minNext ? minNext : a));
 	}, [minNext]);
 
-	const canBid = !!myCaptain && live.phase === "BIDDING";
+	const teamFull =
+		!!myCaptain &&
+		maxTeamSize > 0 &&
+		myCaptain.teamPlayerIds.length >= maxTeamSize;
+	const canBid = !!myCaptain && live.phase === "BIDDING" && !teamFull;
 	const leading = myCaptain && live.highestBidderId === myCaptain.id;
 
 	async function doBid() {
@@ -144,6 +150,12 @@ export function BidPanel({
 				{!myCaptain && (
 					<p className="rounded-lg bg-white/5 px-3 py-2 text-center text-xs text-white/50">
 						Only captains can bid.
+					</p>
+				)}
+
+				{teamFull && (
+					<p className="rounded-lg bg-deepRed/15 px-3 py-2 text-center text-xs font-medium text-deepRed">
+						Your team is full ({maxTeamSize} players) — you can no longer bid.
 					</p>
 				)}
 			</div>

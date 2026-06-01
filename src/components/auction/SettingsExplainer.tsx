@@ -6,6 +6,7 @@ import {
 	FiLayers,
 	FiPercent,
 	FiTrendingUp,
+	FiUsers,
 	FiZap,
 } from "react-icons/fi";
 import { formatCredits } from "@/lib/format";
@@ -37,6 +38,15 @@ export function SettingsExplainer({ auction }: { auction: Auction }) {
 			title: "Budget safety cap",
 			value: `${s.maxBidPercent}%`,
 			text: `Until a captain owns ${s.teamSizeForPercentLimit} players they can't bid more than ${s.maxBidPercent}% of their balance — so everyone can field a full team.`,
+		},
+		{
+			icon: FiUsers,
+			title: "Maximum team size",
+			value: s.maxTeamSize > 0 ? `${s.maxTeamSize}` : "∞",
+			text:
+				s.maxTeamSize > 0
+					? `Each captain can win at most ${s.maxTeamSize} players; once full they can no longer bid.`
+					: "No team size limit.",
 		},
 		{
 			icon: FiLayers,
