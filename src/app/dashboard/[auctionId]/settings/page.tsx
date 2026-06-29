@@ -61,6 +61,8 @@ export default function SettingsPage() {
 			// sensible, valid default in the form so it can be saved.
 			setSettings({
 				...auction.settings,
+				// Likewise, auctions saved before the max-bid window existed come back as 0.
+				maxBidWindowSeconds: auction.settings.maxBidWindowSeconds || 10,
 				maxTeamSize:
 					auction.settings.maxTeamSize > 0
 						? auction.settings.maxTeamSize
@@ -147,8 +149,8 @@ export default function SettingsPage() {
 						onChange={(v) => patch("startingBalance", v)}
 					/>
 					<NumberField
-						label="Max bid (instant win)"
-						hint="A bid of exactly this amount wins instantly"
+						label="Max bid"
+						hint="Bidding this opens the counter window, then the winner is drawn at random"
 						value={settings.maxBid}
 						onChange={(v) => patch("maxBid", v)}
 					/>
@@ -157,6 +159,12 @@ export default function SettingsPage() {
 						hint="Smallest legal raise"
 						value={settings.minIncrement}
 						onChange={(v) => patch("minIncrement", v)}
+					/>
+					<NumberField
+						label="Max bid window (s)"
+						hint="Time others get to counter a max bid before the random draw (1–120)"
+						value={settings.maxBidWindowSeconds}
+						onChange={(v) => patch("maxBidWindowSeconds", v)}
 					/>
 					<NumberField
 						label="Players before % cap lifts"

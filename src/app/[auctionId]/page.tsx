@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { BidHistory } from "@/components/auction/BidHistory";
 import { CaptainList } from "@/components/auction/CaptainList";
 import { CurrentPlayerCard } from "@/components/auction/CurrentPlayerCard";
+import { LiveChat } from "@/components/auction/LiveChat";
 import { ReadyPanel } from "@/components/auction/ReadyPanel";
 import { SettingsExplainer } from "@/components/auction/SettingsExplainer";
 import { TeamsList } from "@/components/auction/TeamsList";
@@ -125,6 +126,10 @@ export default function PublicAuctionPage() {
 								myCaptain={myCaptain}
 							/>
 							<SettingsExplainer auction={auction} />
+							<LiveChat
+								auctionId={auctionId}
+								hasChannel={!!auction.channelId}
+							/>
 							<div>
 								<h3 className="mb-3 text-sm font-semibold uppercase tracking-widest text-white/40">
 									Players ({nonCaptainPlayers.length})
@@ -134,7 +139,7 @@ export default function PublicAuctionPage() {
 						</>
 					)}
 
-					{running && live && (
+					{running && (
 						<>
 							{paused && (
 								<ReadyPanel
@@ -144,15 +149,23 @@ export default function PublicAuctionPage() {
 									paused
 								/>
 							)}
-							{/* Keep the player + bid controls pinned while scrolling through the teams below. */}
-							<div className="sticky top-20 z-30">
-								<CurrentPlayerCard
-									auctionId={auctionId}
-									auction={auction}
-									live={live}
-									myCaptain={myCaptain}
-								/>
-							</div>
+							{/* Keep the player + bid controls pinned while scrolling through the teams below.
+							    Only this card needs the live snapshot; the chat + teams render as soon as the
+							    auction is running so they're never hidden waiting on the socket. */}
+							{live && (
+								<div className="sticky top-20 z-30">
+									<CurrentPlayerCard
+										auctionId={auctionId}
+										auction={auction}
+										live={live}
+										myCaptain={myCaptain}
+									/>
+								</div>
+							)}
+							<LiveChat
+								auctionId={auctionId}
+								hasChannel={!!auction.channelId}
+							/>
 							<TeamsList captains={captains} players={players} />
 						</>
 					)}
@@ -189,6 +202,8 @@ export default function PublicAuctionPage() {
 						captains={captains}
 						onlineOsuIds={onlineOsuIds}
 						highestBidderId={live?.highestBidderId ?? null}
+						maxBidderIds={live?.maxBidderIds ?? []}
+						maxBidWinnerId={live?.maxBidWinnerId ?? null}
 						showBalance={running || finished}
 						showReady={scheduled || paused}
 						currentOsuId={user?.osuId ?? null}

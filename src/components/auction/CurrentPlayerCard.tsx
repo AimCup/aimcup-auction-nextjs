@@ -5,6 +5,7 @@ import { Avatar } from "@/components/Avatar";
 import { CountryFlag } from "@/components/CountryFlag";
 import { CountdownRing } from "@/components/CountdownRing";
 import { BidPanel } from "@/components/auction/BidPanel";
+import { MaxBidDraw } from "@/components/auction/MaxBidDraw";
 import { formatRank } from "@/lib/format";
 import { useCountdown } from "@/lib/useCountdown";
 import { Auction, Captain, LiveAuctionState, Player } from "@/lib/types";
@@ -26,6 +27,16 @@ export function CurrentPlayerCard({
 		live.highestBid > 0
 			? stage?.biddingTimeAfterBidSeconds ?? 15
 			: stage?.biddingTimeSeconds ?? 30;
+
+	// Resolve the max-bid draw pool / winner from their ids against the live roster.
+	const maxBidderIds = live.maxBidderIds ?? [];
+	const contenders = maxBidderIds
+		.map((id) => live.captains.find((c) => c.id === id))
+		.filter((c): c is Captain => !!c);
+	const winner = live.maxBidWinnerId
+		? live.captains.find((c) => c.id === live.maxBidWinnerId) ?? null
+		: null;
+	const drawing = live.phase === "MAX_BID_DRAW";
 
 	return (
 		<div className="relative overflow-hidden rounded-2xl border border-white/10 bg-tuned">
@@ -90,6 +101,13 @@ export function CurrentPlayerCard({
 													/>
 												)}
 											{live.phaseEndsAtEpochMs > 0 &&
+												live.phase === "MAX_BID_WINDOW" && (
+													<MaxBidBadge
+														targetEpochMs={live.phaseEndsAtEpochMs}
+														contenders={contenders.length}
+													/>
+												)}
+											{live.phaseEndsAtEpochMs > 0 &&
 												live.phase === "GAP" && (
 													<GapBadge
 														targetEpochMs={live.phaseEndsAtEpochMs}
@@ -124,18 +142,56 @@ export function CurrentPlayerCard({
 					</AnimatePresence>
 				</div>
 
-				{/* Right 1/3 — bid panel */}
+				{/* Right 1/3 — bid panel, or the winner draw while it runs */}
 				<div className="flex-1 rounded-xl border border-white/10 bg-deepCharcoal/60 p-4 backdrop-blur-sm">
-					<BidPanel
-						auctionId={auctionId}
-						live={live}
-						myCaptain={myCaptain}
-						maxBid={auction.settings.maxBid}
-						minIncrement={auction.settings.minIncrement}
-						maxTeamSize={auction.settings.maxTeamSize}
-					/>
+					{drawing ? (
+						<MaxBidDraw
+							candidates={contenders}
+							winner={winner}
+							player={player}
+							targetEpochMs={live.phaseEndsAtEpochMs}
+						/>
+					) : (
+						<BidPanel
+							auctionId={auctionId}
+							live={live}
+							myCaptain={myCaptain}
+							maxBid={auction.settings.maxBid}
+							minIncrement={auction.settings.minIncrement}
+							maxTeamSize={auction.settings.maxTeamSize}
+						/>
+					)}
 				</div>
 			</div>
+		</div>
+	);
+}
+
+/**
+ * Countdown shown while the max-bid window is open (other captains may counter). Mirrors GapBadge but
+ * in the "danger" accent, and surfaces how many captains are already in the draw.
+ */
+function MaxBidBadge({
+	targetEpochMs,
+	contenders,
+}: {
+	targetEpochMs: number;
+	contenders: number;
+}) {
+	const remaining = useCountdown(targetEpochMs);
+	const seconds = Math.max(0, Math.ceil(remaining / 1000));
+	return (
+		<div className="flex flex-col items-center justify-center gap-0.5 rounded-xl border border-deepRed/40 bg-deepRed/10 px-4 py-2 text-center">
+			<span className="text-[10px] font-bold uppercase tracking-widest text-deepRed">
+				Max bid
+			</span>
+			<span className="font-mono text-3xl font-black tabular-nums text-deepRed">
+				{seconds}
+				<span className="ml-0.5 text-base font-semibold text-deepRed/70">s</span>
+			</span>
+			<span className="text-[10px] text-white/50">
+				{contenders} in draw
+			</span>
 		</div>
 	);
 }

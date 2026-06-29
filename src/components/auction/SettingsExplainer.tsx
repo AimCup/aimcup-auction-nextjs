@@ -23,9 +23,9 @@ export function SettingsExplainer({ auction }: { auction: Auction }) {
 		},
 		{
 			icon: FiZap,
-			title: "Max bid (instant win)",
+			title: "Max bid",
 			value: formatCredits(s.maxBid),
-			text: `A captain who bids exactly ${formatCredits(s.maxBid)} wins the player immediately.`,
+			text: `Bidding exactly ${formatCredits(s.maxBid)} opens a ${s.maxBidWindowSeconds ?? 10}s window for other captains to counter with their own max bid; the winner is then drawn at random from everyone who maxed.`,
 		},
 		{
 			icon: FiTrendingUp,

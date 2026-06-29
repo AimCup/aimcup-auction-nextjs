@@ -10,6 +10,8 @@ export function CaptainList({
 	captains,
 	onlineOsuIds,
 	highestBidderId,
+	maxBidderIds = [],
+	maxBidWinnerId = null,
 	showBalance,
 	showReady,
 	currentOsuId,
@@ -17,11 +19,14 @@ export function CaptainList({
 	captains: Captain[];
 	onlineOsuIds: number[];
 	highestBidderId: string | null;
+	maxBidderIds?: string[];
+	maxBidWinnerId?: string | null;
 	showBalance: boolean;
 	showReady?: boolean;
 	currentOsuId?: number | null;
 }) {
 	const online = new Set(onlineOsuIds);
+	const contenders = new Set(maxBidderIds);
 	// While confirming readiness (before start / during pause): pin the viewing captain to the very
 	// top, then float ready captains above not-ready ones. The cards animate via framer-motion layout.
 	const displayed = showReady
@@ -39,16 +44,21 @@ export function CaptainList({
 				Captains ({captains.length})
 			</h3>
 			{displayed.map((c) => {
+				const isWinner = maxBidWinnerId === c.id;
+				const isContender = contenders.has(c.id);
 				const leading = highestBidderId === c.id;
+				const highlight = isWinner
+					? "border-amber-300/80 bg-amber-300/15 shadow-[0_0_22px_rgba(252,211,77,0.4)] scale-[1.02]"
+					: isContender
+						? "border-deepRed/60 bg-deepRed/10 animate-pulse-ring"
+						: leading
+							? "border-mintGreen/60 bg-mintGreen/10 animate-pulse-ring"
+							: "border-white/5 bg-tuned/40";
 				return (
 					<motion.div
 						key={c.id}
 						layout
-						className={`flex items-center gap-2.5 rounded-xl border p-2.5 transition ${
-							leading
-								? "border-mintGreen/60 bg-mintGreen/10 animate-pulse-ring"
-								: "border-white/5 bg-tuned/40"
-						}`}
+						className={`flex items-center gap-2.5 rounded-xl border p-2.5 transition ${highlight}`}
 					>
 						<div className="relative">
 							<Avatar osuId={c.osuId} src={c.avatarUrl} size={36} />
@@ -65,6 +75,17 @@ export function CaptainList({
 								<span className="truncate text-sm font-semibold">
 									{c.username}
 								</span>
+								{isWinner ? (
+									<span className="shrink-0 rounded bg-amber-300/20 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-amber-200">
+										Won
+									</span>
+								) : (
+									isContender && (
+										<span className="shrink-0 rounded bg-deepRed/20 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-deepRed">
+											Max
+										</span>
+									)
+								)}
 							</div>
 							{showBalance && (
 								<span className="font-mono text-xs text-mintGreen">

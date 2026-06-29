@@ -11,6 +11,10 @@ import { Captain, LiveAuctionState } from "@/lib/types";
 /**
  * The bidding controls (right third of the current-player card). Only enabled for the captain who
  * is signed in; everyone else sees a read-only panel.
+ *
+ * A max bid no longer wins instantly — it opens a short window in which other captains may counter
+ * with their own max bid, after which the winner is drawn at random. During that window only counter
+ * max bids are accepted, so the regular BID controls are disabled and only MAX stays live.
  */
 export function BidPanel({
 	auctionId,
@@ -47,11 +51,21 @@ export function BidPanel({
 		setAmount((a) => (a < minNext ? minNext : a));
 	}, [minNext]);
 
+	const maxBidders = live.maxBidderIds ?? [];
+	const inWindow = live.phase === "MAX_BID_WINDOW";
 	const teamFull =
 		!!myCaptain &&
 		maxTeamSize > 0 &&
 		myCaptain.teamPlayerIds.length >= maxTeamSize;
-	const canBid = !!myCaptain && live.phase === "BIDDING" && !teamFull;
+	const myInPool = !!myCaptain && maxBidders.includes(myCaptain.id);
+	// Regular incremental bids only exist in the open BIDDING phase.
+	const canRegularBid = !!myCaptain && live.phase === "BIDDING" && !teamFull;
+	// A max bid is allowed in BIDDING (to call it) and during the window (to counter), once each.
+	const canMaxBid =
+		!!myCaptain &&
+		(live.phase === "BIDDING" || inWindow) &&
+		!teamFull &&
+		!myInPool;
 	const leading = myCaptain && live.highestBidderId === myCaptain.id;
 
 	async function doBid() {
@@ -78,13 +92,22 @@ export function BidPanel({
 		<div className="flex h-full flex-col justify-between gap-3">
 			<div>
 				<p className="text-[11px] uppercase tracking-widest text-white/40">
-					Top bid
+					{inWindow ? "Max bid called" : "Top bid"}
 				</p>
-				<p className="font-mono text-3xl font-black text-mintGreen">
+				<p
+					className={`font-mono text-3xl font-black ${
+						inWindow ? "text-deepRed" : "text-mintGreen"
+					}`}
+				>
 					{formatCredits(live.highestBid)}
 				</p>
 				<p className="mt-0.5 text-sm text-white/60">
-					{live.highestBidderUsername ? (
+					{inWindow ? (
+						<>
+							{maxBidders.length} captain{maxBidders.length === 1 ? "" : "s"} in
+							the draw — counter or pass
+						</>
+					) : live.highestBidderUsername ? (
 						<>
 							by{" "}
 							<span className="font-semibold text-white">
@@ -112,13 +135,13 @@ export function BidPanel({
 						type="number"
 						value={amount}
 						step={minIncrement}
-						disabled={!canBid}
+						disabled={!canRegularBid}
 						onChange={(e) => setAmount(Number(e.target.value))}
 						className="w-full rounded-lg border border-white/10 bg-deepCharcoal/80 px-3 py-2 font-mono outline-none focus:border-mintGreen disabled:opacity-50"
 					/>
 					<button
 						onClick={() => setAmount((a) => a + minIncrement)}
-						disabled={!canBid}
+						disabled={!canRegularBid}
 						title={`+${minIncrement}`}
 						className="shrink-0 rounded-lg border border-white/10 bg-white/5 p-2.5 transition hover:bg-white/10 disabled:opacity-40"
 					>
@@ -129,22 +152,30 @@ export function BidPanel({
 				<div className="flex gap-2">
 					<button
 						onClick={doBid}
-						disabled={!canBid || bidding}
+						disabled={!canRegularBid || bidding}
 						className="flex-1 rounded-lg bg-mintGreen py-2.5 font-bold text-deepCharcoal transition hover:bg-mintGreen/85 disabled:cursor-not-allowed disabled:opacity-40"
 					>
 						{leading ? "Raise" : "BID"}
 					</button>
 					<button
 						onClick={doMax}
-						disabled={!canBid || maxing}
-						title={`Instantly win this player by bidding the max bid of ${formatCredits(maxBid)} credits`}
+						disabled={!canMaxBid || maxing}
+						title={
+							inWindow
+								? `Counter with your own max bid of ${formatCredits(maxBid)} credits`
+								: `Call a max bid of ${formatCredits(maxBid)} — other captains can counter, then the winner is drawn at random`
+						}
 						className="flex items-center gap-1.5 rounded-lg bg-deepRed px-3 py-2.5 font-bold text-white transition hover:bg-deepRed/85 disabled:cursor-not-allowed disabled:opacity-40"
 					>
-						<FiZap size={15} /> MAX
+						<FiZap size={15} /> {myInPool ? "IN" : "MAX"}
 					</button>
 				</div>
 				<p className="text-center text-[10px] text-white/30">
-					MAX BID = instantly win for {formatCredits(maxBid)}
+					{inWindow
+						? myInPool
+							? "You're in the draw — the winner is picked at random."
+							: `Counter with your own max bid of ${formatCredits(maxBid)}`
+						: `MAX BID = ${formatCredits(maxBid)} → enters the random draw`}
 				</p>
 
 				{!myCaptain && (

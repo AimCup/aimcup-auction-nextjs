@@ -61,6 +61,7 @@ export const AUCTION_FIELDS = gql`
 			startingBalance
 			maxBid
 			minIncrement
+			maxBidWindowSeconds
 			teamSizeForPercentLimit
 			maxBidPercent
 			maxDescriptionLength
@@ -103,6 +104,8 @@ export const LIVE_FIELDS = gql`
 		highestBid
 		highestBidderId
 		highestBidderUsername
+		maxBidderIds
+		maxBidWinnerId
 		phaseEndsAtEpochMs
 		pausedByOrganizer
 		message

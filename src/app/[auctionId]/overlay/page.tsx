@@ -112,6 +112,13 @@ export default function OverlayPage() {
 	const phase = live?.phase ?? "WAITING_TO_START";
 	const player = live?.currentPlayer ?? null;
 	const bidding = phase === "BIDDING" && !!player;
+	const maxWindow = phase === "MAX_BID_WINDOW" && !!player;
+	const maxDraw = phase === "MAX_BID_DRAW" && !!player;
+	const maxContenders = live?.maxBidderIds?.length ?? 0;
+	const drawWinner =
+		(live?.maxBidWinnerId &&
+			(live?.captains ?? []).find((c) => c.id === live.maxBidWinnerId)) ||
+		null;
 	const secondsLeft = live
 		? Math.max(0, (live.phaseEndsAtEpochMs - now) / 1000)
 		: 0;
@@ -263,7 +270,41 @@ export default function OverlayPage() {
 									<div className="timer-lbl">seconds left</div>
 								</div>
 							</div>
-						) : showSold && gapResult ? (
+						) : maxWindow ? (
+								<div>
+									<div className="bid-label">Max bid called</div>
+									<div className="bid-amount">
+										{live!.highestBid > 0
+											? live!.highestBid.toLocaleString()
+											: "0"}
+									</div>
+									<div className="bid-leader">
+										{maxContenders} captain{maxContenders === 1 ? "" : "s"} in
+										the draw
+									</div>
+									<div className="bid-divider" />
+									<div className="timer-row">
+										<div
+											className={`timer${secondsLeft <= 10 ? " urgent" : ""}`}
+										>
+											{secondsLeft.toFixed(1)}
+										</div>
+										<div className="timer-lbl">seconds to counter</div>
+									</div>
+								</div>
+							) : maxDraw ? (
+								<div className="sold-view">
+									<div className="sold-view__tag">Drawing…</div>
+									<div className="sold-view__name">
+										{drawWinner ? drawWinner.username : "Picking a winner"}
+									</div>
+									<div className="sold-view__detail">
+										{drawWinner
+											? `wins ${player?.username ?? "the player"}`
+											: `from ${maxContenders} max bids`}
+									</div>
+								</div>
+							) : showSold && gapResult ? (
 							<div className={`sold-view${gapResult.sold ? "" : " no-bid"}`}>
 								<div className="sold-view__tag">
 									{gapResult.sold ? "SOLD" : "No Bids"}
