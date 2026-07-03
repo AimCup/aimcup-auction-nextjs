@@ -64,6 +64,13 @@ export interface Player {
 	worstMapAccuracy: number | null;
 }
 
+export interface CaptainProxy {
+	osuId: number;
+	username: string | null;
+	avatarUrl: string | null;
+	discordId: string | null;
+}
+
 export interface Captain {
 	id: string;
 	playerId: string;
@@ -75,6 +82,7 @@ export interface Captain {
 	balance: number;
 	ready: boolean;
 	teamPlayerIds: string[];
+	proxy: CaptainProxy | null;
 }
 
 export interface BidEvent {

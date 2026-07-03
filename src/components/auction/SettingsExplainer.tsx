@@ -25,7 +25,7 @@ export function SettingsExplainer({ auction }: { auction: Auction }) {
 			icon: FiZap,
 			title: "Max bid",
 			value: formatCredits(s.maxBid),
-			text: `Bidding exactly ${formatCredits(s.maxBid)} opens a ${s.maxBidWindowSeconds ?? 10}s window for other captains to counter with their own max bid; the winner is then drawn at random from everyone who maxed.`,
+			text: `Bidding exactly ${formatCredits(s.maxBid)} opens a ${s.maxBidWindowSeconds || 10}s window for other captains to counter with their own max bid; the winner is then drawn at random from everyone who maxed.`,
 		},
 		{
 			icon: FiTrendingUp,

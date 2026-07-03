@@ -204,6 +204,7 @@ export default function PublicAuctionPage() {
 						highestBidderId={live?.highestBidderId ?? null}
 						maxBidderIds={live?.maxBidderIds ?? []}
 						maxBidWinnerId={live?.maxBidWinnerId ?? null}
+						phase={live?.phase ?? null}
 						showBalance={running || finished}
 						showReady={scheduled || paused}
 						currentOsuId={user?.osuId ?? null}

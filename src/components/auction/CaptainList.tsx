@@ -1,10 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { FiLink } from "react-icons/fi";
 import { Avatar } from "@/components/Avatar";
 import { CountryFlag } from "@/components/CountryFlag";
 import { formatCredits } from "@/lib/format";
-import { Captain } from "@/lib/types";
+import { AuctionPhase, Captain } from "@/lib/types";
 
 export function CaptainList({
 	captains,
@@ -12,6 +13,7 @@ export function CaptainList({
 	highestBidderId,
 	maxBidderIds = [],
 	maxBidWinnerId = null,
+	phase = null,
 	showBalance,
 	showReady,
 	currentOsuId,
@@ -21,6 +23,7 @@ export function CaptainList({
 	highestBidderId: string | null;
 	maxBidderIds?: string[];
 	maxBidWinnerId?: string | null;
+	phase?: AuctionPhase | null;
 	showBalance: boolean;
 	showReady?: boolean;
 	currentOsuId?: number | null;
@@ -44,7 +47,10 @@ export function CaptainList({
 				Captains ({captains.length})
 			</h3>
 			{displayed.map((c) => {
-				const isWinner = maxBidWinnerId === c.id;
+				// Reveal the winner highlight only after the roulette has landed (i.e. not during the
+				// MAX_BID_DRAW spin), so the captain list never spoils the draw before the reel stops.
+				const isWinner =
+					phase !== "MAX_BID_DRAW" && maxBidWinnerId === c.id;
 				const isContender = contenders.has(c.id);
 				const leading = highestBidderId === c.id;
 				const highlight = isWinner
@@ -86,9 +92,22 @@ export function CaptainList({
 										</span>
 									)
 								)}
+								{c.proxy && (
+									<span
+										className="flex shrink-0 items-center gap-0.5 rounded bg-sky-400/20 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-sky-300"
+										title={`Bidding via proxy ${c.proxy.username ?? c.proxy.osuId}`}
+									>
+										<FiLink size={9} /> Proxy
+									</span>
+								)}
 							</div>
+							{c.proxy && (
+								<span className="text-[10px] text-sky-300/70">
+									via {c.proxy.username ?? c.proxy.osuId}
+								</span>
+							)}
 							{showBalance && (
-								<span className="font-mono text-xs text-mintGreen">
+								<span className="block font-mono text-xs text-mintGreen">
 									{formatCredits(c.balance)}
 								</span>
 							)}

@@ -5,10 +5,12 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import {
 	FiDollarSign,
+	FiLink,
 	FiPause,
 	FiPlay,
 	FiSkipForward,
 	FiTrash2,
+	FiX,
 } from "react-icons/fi";
 import { Avatar } from "@/components/Avatar";
 import { useToast } from "@/components/Toast";
@@ -16,6 +18,7 @@ import {
 	CHANGE_BALANCE,
 	LIVE_AUCTION_SUB,
 	PAUSE_AUCTION,
+	REMOVE_CAPTAIN_PROXY,
 	REMOVE_FROM_TEAM,
 	RESUME_AUCTION,
 	START_AUCTION,
@@ -36,6 +39,7 @@ export default function ControlPage() {
 	const [resumeAuction] = useMutation(RESUME_AUCTION);
 	const [changeBalance] = useMutation(CHANGE_BALANCE);
 	const [removeFromTeam] = useMutation(REMOVE_FROM_TEAM);
+	const [removeCaptainProxy] = useMutation(REMOVE_CAPTAIN_PROXY);
 
 	const [editing, setEditing] = useState<Record<string, string>>({});
 
@@ -212,7 +216,31 @@ export default function ControlPage() {
 							className="flex items-center gap-3 rounded-xl border border-white/5 bg-tuned/40 p-3"
 						>
 							<Avatar osuId={c.osuId} src={c.avatarUrl} size={36} />
-							<span className="flex-1 truncate font-semibold">{c.username}</span>
+							<div className="min-w-0 flex-1">
+									<span className="truncate font-semibold">{c.username}</span>
+									{c.proxy && (
+										<span className="ml-2 inline-flex items-center gap-1 rounded bg-amber-200/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-200">
+											<FiLink size={10} /> via {c.proxy.username ?? c.proxy.osuId}
+											{paused && (
+												<button
+													onClick={() =>
+														run(
+															() =>
+																removeCaptainProxy({
+																	variables: { auctionId, captainId: c.id },
+																}),
+															"Proxy removed",
+														)
+													}
+													title="Remove proxy"
+													className="ml-0.5 rounded p-0.5 hover:bg-deepRed/20 hover:text-deepRed"
+												>
+													<FiX size={11} />
+												</button>
+											)}
+										</span>
+									)}
+								</div>
 							<span className="font-mono text-mintGreen">
 								{formatCredits(c.balance)}
 							</span>

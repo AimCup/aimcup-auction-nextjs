@@ -5,7 +5,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { AUCTION_CHAT_SUB, GET_AUCTION, LIVE_AUCTION_SUB } from "@/lib/graphql";
 import { osuAvatar, flagUrl } from "@/lib/format";
-import { Auction, ChatEmbed, ChatMessage, LiveAuctionState, Player } from "@/lib/types";
+import { MaxBidDraw } from "@/components/auction/MaxBidDraw";
+import {
+	Auction,
+	Captain,
+	ChatEmbed,
+	ChatMessage,
+	LiveAuctionState,
+	Player,
+} from "@/lib/types";
 import "./overlay.css";
 
 type SaleResult = {
@@ -115,10 +123,14 @@ export default function OverlayPage() {
 	const maxWindow = phase === "MAX_BID_WINDOW" && !!player;
 	const maxDraw = phase === "MAX_BID_DRAW" && !!player;
 	const maxContenders = live?.maxBidderIds?.length ?? 0;
-	const drawWinner =
-		(live?.maxBidWinnerId &&
-			(live?.captains ?? []).find((c) => c.id === live.maxBidWinnerId)) ||
-		null;
+	const drawCandidates: Captain[] = maxDraw
+		? (live?.maxBidderIds ?? [])
+				.map((id) => (live?.captains ?? []).find((c) => c.id === id))
+				.filter((c): c is Captain => !!c)
+		: [];
+	const drawWinner: Captain | null = maxDraw
+		? (live?.captains ?? []).find((c) => c.id === live?.maxBidWinnerId) ?? null
+		: null;
 	const secondsLeft = live
 		? Math.max(0, (live.phaseEndsAtEpochMs - now) / 1000)
 		: 0;
@@ -293,17 +305,12 @@ export default function OverlayPage() {
 									</div>
 								</div>
 							) : maxDraw ? (
-								<div className="sold-view">
-									<div className="sold-view__tag">Drawing…</div>
-									<div className="sold-view__name">
-										{drawWinner ? drawWinner.username : "Picking a winner"}
-									</div>
-									<div className="sold-view__detail">
-										{drawWinner
-											? `wins ${player?.username ?? "the player"}`
-											: `from ${maxContenders} max bids`}
-									</div>
-								</div>
+								<MaxBidDraw
+									candidates={drawCandidates}
+									winner={drawWinner}
+									player={player}
+									targetEpochMs={live?.phaseEndsAtEpochMs ?? 0}
+								/>
 							) : showSold && gapResult ? (
 							<div className={`sold-view${gapResult.sold ? "" : " no-bid"}`}>
 								<div className="sold-view__tag">

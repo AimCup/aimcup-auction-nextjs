@@ -58,15 +58,19 @@ export function BidPanel({
 		maxTeamSize > 0 &&
 		myCaptain.teamPlayerIds.length >= maxTeamSize;
 	const myInPool = !!myCaptain && maxBidders.includes(myCaptain.id);
-	// Regular incremental bids only exist in the open BIDDING phase.
-	const canRegularBid = !!myCaptain && live.phase === "BIDDING" && !teamFull;
-	// A max bid is allowed in BIDDING (to call it) and during the window (to counter), once each.
+	const leading = !!myCaptain && live.highestBidderId === myCaptain.id;
+	// Regular incremental bids only exist in the open BIDDING phase — and never for the captain who
+	// already holds the top bid: they can't raise their own bid, another captain must bid first.
+	const canRegularBid =
+		!!myCaptain && live.phase === "BIDDING" && !teamFull && !leading;
+	// A max bid is allowed in BIDDING (to call it) and during the window (to counter), once each, and
+	// not by the captain who is already the top bidder (the same self-bid rule the server enforces).
 	const canMaxBid =
 		!!myCaptain &&
 		(live.phase === "BIDDING" || inWindow) &&
 		!teamFull &&
-		!myInPool;
-	const leading = myCaptain && live.highestBidderId === myCaptain.id;
+		!myInPool &&
+		!leading;
 
 	async function doBid() {
 		try {
@@ -181,6 +185,12 @@ export function BidPanel({
 				{!myCaptain && (
 					<p className="rounded-lg bg-white/5 px-3 py-2 text-center text-xs text-white/50">
 						Only captains can bid.
+					</p>
+				)}
+
+				{leading && live.phase === "BIDDING" && !teamFull && (
+					<p className="rounded-lg bg-mintGreen/10 px-3 py-2 text-center text-xs font-medium text-mintGreen">
+						You&apos;re the top bidder — wait for another captain to bid.
 					</p>
 				)}
 
