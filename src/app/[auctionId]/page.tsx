@@ -48,8 +48,14 @@ export default function PublicAuctionPage() {
 	const nonCaptainPlayers = players.filter((p) => !p.captain);
 	const onlineOsuIds = live?.onlineOsuIds ?? [];
 
-	const myCaptain =
-		(user && captains.find((c) => c.osuId === user.osuId)) || null;
+	// A proxy acts on its captain's behalf, so resolve "my captain" the same way the server does:
+	// first a captain whose proxy is me, otherwise a captain — with no proxy — who is me. A captain
+	// who has a proxy is locked out of their own identity (only the proxy can act).
+	const myCaptain = user
+		? captains.find((c) => c.proxy != null && c.proxy.osuId === user.osuId) ??
+			captains.find((c) => c.proxy == null && c.osuId === user.osuId) ??
+			null
+		: null;
 	const canManage =
 		!!user &&
 		(auction.creatorOsuId === user.osuId ||

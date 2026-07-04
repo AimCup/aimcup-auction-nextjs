@@ -164,13 +164,17 @@ export default function PlayersPage() {
 	}
 
 	async function remove(player: Player) {
-		await removePlayer({ variables: { auctionId, playerId: player.id } });
-		setSelected((s) => {
-			const next = new Set(s);
-			next.delete(player.id);
-			return next;
-		});
-		await refetch();
+		try {
+			await removePlayer({ variables: { auctionId, playerId: player.id } });
+			setSelected((s) => {
+				const next = new Set(s);
+				next.delete(player.id);
+				return next;
+			});
+			await refetch();
+		} catch (err: any) {
+			toast(err.message ?? "Failed to remove player", "error");
+		}
 	}
 
 	function toggleSelect(id: string) {
@@ -200,17 +204,23 @@ export default function PlayersPage() {
 				),
 			);
 			toast(`Removed ${selected.size} player(s)`, "success");
+		} catch (err: any) {
+			toast(err.message ?? "Some players could not be removed", "error");
+		} finally {
+			// Always resync: some deletes may have committed even if one rejected, and the cache
+			// isn't updated by a Boolean mutation — the refetch is what refreshes the roster.
 			setSelected(new Set());
 			await refetch();
-		} catch (err: any) {
-			toast(err.message ?? "Failed to remove players", "error");
-		} finally {
 			setBusy(false);
 		}
 	}
 
 	async function confirmProxy() {
 		if (!proxyModal || !proxyOsuId.trim()) return;
+		if (!Number.isFinite(Number(proxyOsuId))) {
+			toast("Enter a valid numeric osu! id", "error");
+			return;
+		}
 		try {
 			await setCaptainProxy({
 				variables: {
@@ -555,6 +565,7 @@ export default function PlayersPage() {
 				</p>
 				<input
 					value={proxyOsuId}
+					inputMode="numeric"
 					onChange={(e) => setProxyOsuId(e.target.value)}
 					placeholder="Proxy osu! user id"
 					className="mb-3 w-full rounded-lg border border-white/10 bg-deepCharcoal px-3 py-2 outline-none focus:border-mintGreen"

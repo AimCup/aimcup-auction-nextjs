@@ -38,6 +38,48 @@ export function CurrentPlayerCard({
 		: null;
 	const drawing = live.phase === "MAX_BID_DRAW";
 
+	// During the draw, dedicate the whole card to the roulette — centred and constrained to the same
+	// reel width as the stream overlay (~420px ≈ the overlay's bid card), so the animation renders 1:1.
+	if (drawing) {
+		return (
+			<div className="relative overflow-hidden rounded-2xl border border-white/10 bg-tuned">
+				{player?.bannerUrl && (
+					<div
+						className="absolute inset-0 bg-cover bg-center opacity-40"
+						style={{ backgroundImage: `url(${player.bannerUrl})` }}
+					/>
+				)}
+				<div className="absolute inset-0 bg-gradient-to-b from-deepCharcoal/70 via-deepCharcoal/85 to-tuned" />
+				<div className="relative flex min-h-[230px] flex-col items-center justify-center gap-5 p-5">
+					{player && (
+						<div className="flex items-center gap-3">
+							<Avatar
+								osuId={player.osuId}
+								src={player.avatarUrl}
+								size={44}
+								className="ring-2 ring-white/10"
+							/>
+							<div className="min-w-0">
+								<p className="text-[11px] uppercase tracking-widest text-white/40">
+									Up for auction
+								</p>
+								<h2 className="truncate text-xl font-black">{player.username}</h2>
+							</div>
+						</div>
+					)}
+					<div className="w-full max-w-[420px]">
+						<MaxBidDraw
+							candidates={contenders}
+							winner={winner}
+							player={player}
+							targetEpochMs={live.phaseEndsAtEpochMs}
+						/>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="relative overflow-hidden rounded-2xl border border-white/10 bg-tuned">
 			{/* Banner background, faded left → right so the bid panel stays readable */}
@@ -142,25 +184,16 @@ export function CurrentPlayerCard({
 					</AnimatePresence>
 				</div>
 
-				{/* Right 1/3 — bid panel, or the winner draw while it runs */}
+				{/* Right 1/3 — bid panel (the MAX_BID_DRAW phase is handled by the full-card view above) */}
 				<div className="flex-1 rounded-xl border border-white/10 bg-deepCharcoal/60 p-4 backdrop-blur-sm">
-					{drawing ? (
-						<MaxBidDraw
-							candidates={contenders}
-							winner={winner}
-							player={player}
-							targetEpochMs={live.phaseEndsAtEpochMs}
-						/>
-					) : (
-						<BidPanel
-							auctionId={auctionId}
-							live={live}
-							myCaptain={myCaptain}
-							maxBid={auction.settings.maxBid}
-							minIncrement={auction.settings.minIncrement}
-							maxTeamSize={auction.settings.maxTeamSize}
-						/>
-					)}
+					<BidPanel
+						auctionId={auctionId}
+						live={live}
+						myCaptain={myCaptain}
+						maxBid={auction.settings.maxBid}
+						minIncrement={auction.settings.minIncrement}
+						maxTeamSize={auction.settings.maxTeamSize}
+					/>
 				</div>
 			</div>
 		</div>

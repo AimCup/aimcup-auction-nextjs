@@ -442,7 +442,11 @@ export default function OverlayPage() {
 										0,
 										Math.min(100, (c.balance / startingBalance) * 100),
 									);
-									const leading = live?.highestBidderId === c.id;
+									// Don't light up the winner during the draw — the server sets highestBidderId to
+									// the drawn captain when MAX_BID_DRAW starts, which would spoil the reel reveal.
+									const leading =
+										live?.phase !== "MAX_BID_DRAW" &&
+										live?.highestBidderId === c.id;
 									return (
 										<div
 											className={`team-card${leading ? " leading" : ""}`}

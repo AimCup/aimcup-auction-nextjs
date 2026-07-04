@@ -43,6 +43,10 @@ export function MaxBidDraw({
 	// end (TAIL) — not as the very last slot. That way, when the reel stops with the winner under the
 	// centre marker, there are still slots to its right, so it reads as centred rather than stuck at
 	// the edge with empty space beside it.
+	// Parents pass a freshly-built `candidates` array each render (and the overlay re-renders ~10x/s),
+	// so memoize on stable primitives — the reel only needs to change when the contenders or winner do.
+	const candKey = candidates.map((c) => c.id).join(",");
+	const winnerId = winner?.id ?? null;
 	const { reel, stopIndex } = useMemo(() => {
 		if (candidates.length === 0 || !winner) {
 			return { reel: [] as Captain[], stopIndex: 0 };
@@ -54,7 +58,8 @@ export function MaxBidDraw({
 		const stop = arr.length - 1 - TAIL;
 		arr[stop] = winner;
 		return { reel: arr, stopIndex: stop };
-	}, [candidates, winner]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [candKey, winnerId]);
 
 	const centerX = (i: number) => vw / 2 - (i * SLOT + SLOT / 2);
 	// Land ~1.1s before the phase ends so the winner is showcased before the player is awarded. The
