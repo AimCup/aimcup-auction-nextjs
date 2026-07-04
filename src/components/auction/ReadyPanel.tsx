@@ -2,10 +2,13 @@
 
 import { useMutation } from "@apollo/client";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { FiCheckCircle, FiClock } from "react-icons/fi";
 import { useToast } from "@/components/Toast";
 import { SET_CAPTAIN_READY } from "@/lib/graphql";
 import { Captain } from "@/lib/types";
+
+const COOLDOWN_SECONDS = 3;
 
 /**
  * Readiness check shown before the auction starts (and again while paused). Captains confirm their
@@ -26,13 +29,22 @@ export function ReadyPanel({
 	const toast = useToast();
 	const [setReady, { loading }] = useMutation(SET_CAPTAIN_READY);
 
+	// Anti-spam: after pressing, the button is locked for COOLDOWN_SECONDS.
+	const [cooldown, setCooldown] = useState(0);
+	useEffect(() => {
+		if (cooldown <= 0) return;
+		const t = setTimeout(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+		return () => clearTimeout(t);
+	}, [cooldown]);
+
 	const total = captains.length;
 	const readyCount = captains.filter((c) => c.ready).length;
 	const allReady = total > 0 && readyCount === total;
 	const pct = total === 0 ? 0 : (readyCount / total) * 100;
 
 	async function toggle() {
-		if (!myCaptain) return;
+		if (!myCaptain || loading || cooldown > 0) return;
+		setCooldown(COOLDOWN_SECONDS); // start the 3s lock from the moment of this press
 		try {
 			const res = await setReady({
 				variables: { auctionId, ready: !myCaptain.ready },
@@ -82,14 +94,18 @@ export function ReadyPanel({
 			{myCaptain ? (
 				<button
 					onClick={toggle}
-					disabled={loading}
-					className={`w-full rounded-lg py-2.5 font-bold transition disabled:opacity-50 ${
+					disabled={loading || cooldown > 0}
+					className={`w-full rounded-lg py-2.5 font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
 						myCaptain.ready
 							? "border border-mintGreen/40 bg-mintGreen/10 text-mintGreen hover:bg-mintGreen/20"
 							: "bg-mintGreen text-deepCharcoal hover:bg-mintGreen/85"
 					}`}
 				>
-					{myCaptain.ready ? "✓ You are ready — tap to undo" : "I'm ready"}
+					{cooldown > 0
+						? `Please wait ${cooldown}s…`
+						: myCaptain.ready
+							? "✓ You are ready — tap to undo"
+							: "I'm ready"}
 				</button>
 			) : (
 				<p className="rounded-lg bg-white/5 px-3 py-2 text-center text-xs text-white/50">

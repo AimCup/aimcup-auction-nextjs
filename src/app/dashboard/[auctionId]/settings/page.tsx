@@ -57,7 +57,17 @@ export default function SettingsPage() {
 
 	useEffect(() => {
 		if (auction) {
-			setSettings(auction.settings);
+			// Legacy auctions saved before maxTeamSize existed come back as 0 (unlimited); show a
+			// sensible, valid default in the form so it can be saved.
+			setSettings({
+				...auction.settings,
+				// Likewise, auctions saved before the max-bid window existed come back as 0.
+				maxBidWindowSeconds: auction.settings.maxBidWindowSeconds || 10,
+				maxTeamSize:
+					auction.settings.maxTeamSize > 0
+						? auction.settings.maxTeamSize
+						: Math.max(8, auction.settings.teamSizeForPercentLimit),
+			});
 			setStages(auction.stages);
 			setMeta({
 				banner: auction.banner ?? "",
@@ -139,8 +149,8 @@ export default function SettingsPage() {
 						onChange={(v) => patch("startingBalance", v)}
 					/>
 					<NumberField
-						label="Max bid (instant win)"
-						hint="A bid of exactly this amount wins instantly"
+						label="Max bid"
+						hint="Bidding this opens the counter window, then the winner is drawn at random"
 						value={settings.maxBid}
 						onChange={(v) => patch("maxBid", v)}
 					/>
@@ -149,6 +159,12 @@ export default function SettingsPage() {
 						hint="Smallest legal raise"
 						value={settings.minIncrement}
 						onChange={(v) => patch("minIncrement", v)}
+					/>
+					<NumberField
+						label="Max bid window (s)"
+						hint="Time others get to counter a max bid before the random draw (1–120)"
+						value={settings.maxBidWindowSeconds}
+						onChange={(v) => patch("maxBidWindowSeconds", v)}
 					/>
 					<NumberField
 						label="Players before % cap lifts"
@@ -166,6 +182,12 @@ export default function SettingsPage() {
 						label="Max description length"
 						value={settings.maxDescriptionLength}
 						onChange={(v) => patch("maxDescriptionLength", v)}
+					/>
+					<NumberField
+						label="Maximum team size"
+						hint="A captain can’t bid once their roster reaches this (≥ the % cap roster size)"
+						value={settings.maxTeamSize}
+						onChange={(v) => patch("maxTeamSize", v)}
 					/>
 				</fieldset>
 				{editable && (

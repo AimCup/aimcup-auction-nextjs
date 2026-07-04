@@ -6,6 +6,7 @@ import {
 	FiLayers,
 	FiPercent,
 	FiTrendingUp,
+	FiUsers,
 	FiZap,
 } from "react-icons/fi";
 import { formatCredits } from "@/lib/format";
@@ -22,9 +23,9 @@ export function SettingsExplainer({ auction }: { auction: Auction }) {
 		},
 		{
 			icon: FiZap,
-			title: "Max bid (instant win)",
+			title: "Max bid",
 			value: formatCredits(s.maxBid),
-			text: `A captain who bids exactly ${formatCredits(s.maxBid)} wins the player immediately.`,
+			text: `Bidding exactly ${formatCredits(s.maxBid)} opens a ${s.maxBidWindowSeconds || 10}s window for other captains to counter with their own max bid; the winner is then drawn at random from everyone who maxed.`,
 		},
 		{
 			icon: FiTrendingUp,
@@ -37,6 +38,15 @@ export function SettingsExplainer({ auction }: { auction: Auction }) {
 			title: "Budget safety cap",
 			value: `${s.maxBidPercent}%`,
 			text: `Until a captain owns ${s.teamSizeForPercentLimit} players they can't bid more than ${s.maxBidPercent}% of their balance — so everyone can field a full team.`,
+		},
+		{
+			icon: FiUsers,
+			title: "Maximum team size",
+			value: s.maxTeamSize > 0 ? `${s.maxTeamSize}` : "∞",
+			text:
+				s.maxTeamSize > 0
+					? `Each captain can win at most ${s.maxTeamSize} players; once full they can no longer bid.`
+					: "No team size limit.",
 		},
 		{
 			icon: FiLayers,

@@ -5,7 +5,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { AUCTION_CHAT_SUB, GET_AUCTION, LIVE_AUCTION_SUB } from "@/lib/graphql";
 import { osuAvatar, flagUrl } from "@/lib/format";
-import { Auction, ChatEmbed, ChatMessage, LiveAuctionState, Player } from "@/lib/types";
+import { MaxBidDraw } from "@/components/auction/MaxBidDraw";
+import {
+	Auction,
+	Captain,
+	ChatEmbed,
+	ChatMessage,
+	LiveAuctionState,
+	Player,
+} from "@/lib/types";
 import "./overlay.css";
 
 type SaleResult = {
@@ -112,6 +120,17 @@ export default function OverlayPage() {
 	const phase = live?.phase ?? "WAITING_TO_START";
 	const player = live?.currentPlayer ?? null;
 	const bidding = phase === "BIDDING" && !!player;
+	const maxWindow = phase === "MAX_BID_WINDOW" && !!player;
+	const maxDraw = phase === "MAX_BID_DRAW" && !!player;
+	const maxContenders = live?.maxBidderIds?.length ?? 0;
+	const drawCandidates: Captain[] = maxDraw
+		? (live?.maxBidderIds ?? [])
+				.map((id) => (live?.captains ?? []).find((c) => c.id === id))
+				.filter((c): c is Captain => !!c)
+		: [];
+	const drawWinner: Captain | null = maxDraw
+		? (live?.captains ?? []).find((c) => c.id === live?.maxBidWinnerId) ?? null
+		: null;
 	const secondsLeft = live
 		? Math.max(0, (live.phaseEndsAtEpochMs - now) / 1000)
 		: 0;
@@ -263,7 +282,36 @@ export default function OverlayPage() {
 									<div className="timer-lbl">seconds left</div>
 								</div>
 							</div>
-						) : showSold && gapResult ? (
+						) : maxWindow ? (
+								<div>
+									<div className="bid-label">Max bid called</div>
+									<div className="bid-amount">
+										{live!.highestBid > 0
+											? live!.highestBid.toLocaleString()
+											: "0"}
+									</div>
+									<div className="bid-leader">
+										{maxContenders} captain{maxContenders === 1 ? "" : "s"} in
+										the draw
+									</div>
+									<div className="bid-divider" />
+									<div className="timer-row">
+										<div
+											className={`timer${secondsLeft <= 10 ? " urgent" : ""}`}
+										>
+											{secondsLeft.toFixed(1)}
+										</div>
+										<div className="timer-lbl">seconds to counter</div>
+									</div>
+								</div>
+							) : maxDraw ? (
+								<MaxBidDraw
+									candidates={drawCandidates}
+									winner={drawWinner}
+									player={player}
+									targetEpochMs={live?.phaseEndsAtEpochMs ?? 0}
+								/>
+							) : showSold && gapResult ? (
 							<div className={`sold-view${gapResult.sold ? "" : " no-bid"}`}>
 								<div className="sold-view__tag">
 									{gapResult.sold ? "SOLD" : "No Bids"}
@@ -394,7 +442,11 @@ export default function OverlayPage() {
 										0,
 										Math.min(100, (c.balance / startingBalance) * 100),
 									);
-									const leading = live?.highestBidderId === c.id;
+									// Don't light up the winner during the draw — the server sets highestBidderId to
+									// the drawn captain when MAX_BID_DRAW starts, which would spoil the reel reveal.
+									const leading =
+										live?.phase !== "MAX_BID_DRAW" &&
+										live?.highestBidderId === c.id;
 									return (
 										<div
 											className={`team-card${leading ? " leading" : ""}`}

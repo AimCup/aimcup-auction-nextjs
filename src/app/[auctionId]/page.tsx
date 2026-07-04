@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { BidHistory } from "@/components/auction/BidHistory";
 import { CaptainList } from "@/components/auction/CaptainList";
 import { CurrentPlayerCard } from "@/components/auction/CurrentPlayerCard";
+import { LiveChat } from "@/components/auction/LiveChat";
 import { ReadyPanel } from "@/components/auction/ReadyPanel";
 import { SettingsExplainer } from "@/components/auction/SettingsExplainer";
 import { TeamsList } from "@/components/auction/TeamsList";
@@ -47,8 +48,14 @@ export default function PublicAuctionPage() {
 	const nonCaptainPlayers = players.filter((p) => !p.captain);
 	const onlineOsuIds = live?.onlineOsuIds ?? [];
 
-	const myCaptain =
-		(user && captains.find((c) => c.osuId === user.osuId)) || null;
+	// A proxy acts on its captain's behalf, so resolve "my captain" the same way the server does:
+	// first a captain whose proxy is me, otherwise a captain — with no proxy — who is me. A captain
+	// who has a proxy is locked out of their own identity (only the proxy can act).
+	const myCaptain = user
+		? captains.find((c) => c.proxy != null && c.proxy.osuId === user.osuId) ??
+			captains.find((c) => c.proxy == null && c.osuId === user.osuId) ??
+			null
+		: null;
 	const canManage =
 		!!user &&
 		(auction.creatorOsuId === user.osuId ||
@@ -125,6 +132,10 @@ export default function PublicAuctionPage() {
 								myCaptain={myCaptain}
 							/>
 							<SettingsExplainer auction={auction} />
+							<LiveChat
+								auctionId={auctionId}
+								hasChannel={!!auction.channelId}
+							/>
 							<div>
 								<h3 className="mb-3 text-sm font-semibold uppercase tracking-widest text-white/40">
 									Players ({nonCaptainPlayers.length})
@@ -134,7 +145,7 @@ export default function PublicAuctionPage() {
 						</>
 					)}
 
-					{running && live && (
+					{running && (
 						<>
 							{paused && (
 								<ReadyPanel
@@ -144,11 +155,22 @@ export default function PublicAuctionPage() {
 									paused
 								/>
 							)}
-							<CurrentPlayerCard
+							{/* Keep the player + bid controls pinned while scrolling through the teams below.
+							    Only this card needs the live snapshot; the chat + teams render as soon as the
+							    auction is running so they're never hidden waiting on the socket. */}
+							{live && (
+								<div className="sticky top-20 z-30">
+									<CurrentPlayerCard
+										auctionId={auctionId}
+										auction={auction}
+										live={live}
+										myCaptain={myCaptain}
+									/>
+								</div>
+							)}
+							<LiveChat
 								auctionId={auctionId}
-								auction={auction}
-								live={live}
-								myCaptain={myCaptain}
+								hasChannel={!!auction.channelId}
 							/>
 							<TeamsList captains={captains} players={players} />
 						</>
@@ -186,8 +208,12 @@ export default function PublicAuctionPage() {
 						captains={captains}
 						onlineOsuIds={onlineOsuIds}
 						highestBidderId={live?.highestBidderId ?? null}
+						maxBidderIds={live?.maxBidderIds ?? []}
+						maxBidWinnerId={live?.maxBidWinnerId ?? null}
+						phase={live?.phase ?? null}
 						showBalance={running || finished}
 						showReady={scheduled || paused}
+						currentOsuId={user?.osuId ?? null}
 					/>
 				</div>
 			</div>

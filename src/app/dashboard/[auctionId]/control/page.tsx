@@ -5,19 +5,24 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import {
 	FiDollarSign,
+	FiLink,
 	FiPause,
 	FiPlay,
 	FiSkipForward,
 	FiTrash2,
+	FiX,
 } from "react-icons/fi";
 import { Avatar } from "@/components/Avatar";
+import { Modal } from "@/components/Modal";
 import { useToast } from "@/components/Toast";
 import {
 	CHANGE_BALANCE,
 	LIVE_AUCTION_SUB,
 	PAUSE_AUCTION,
+	REMOVE_CAPTAIN_PROXY,
 	REMOVE_FROM_TEAM,
 	RESUME_AUCTION,
+	SET_CAPTAIN_PROXY,
 	START_AUCTION,
 } from "@/lib/graphql";
 import { formatCredits } from "@/lib/format";
@@ -36,8 +41,39 @@ export default function ControlPage() {
 	const [resumeAuction] = useMutation(RESUME_AUCTION);
 	const [changeBalance] = useMutation(CHANGE_BALANCE);
 	const [removeFromTeam] = useMutation(REMOVE_FROM_TEAM);
+	const [removeCaptainProxy] = useMutation(REMOVE_CAPTAIN_PROXY);
+	const [setCaptainProxy] = useMutation(SET_CAPTAIN_PROXY);
 
 	const [editing, setEditing] = useState<Record<string, string>>({});
+	const [proxyModal, setProxyModal] = useState<Captain | null>(null);
+	const [proxyOsuId, setProxyOsuId] = useState("");
+	const [proxyDiscordId, setProxyDiscordId] = useState("");
+
+	async function confirmProxy() {
+		if (!proxyModal || !proxyOsuId.trim()) return;
+		if (!Number.isFinite(Number(proxyOsuId))) {
+			toast("Enter a valid numeric osu! id", "error");
+			return;
+		}
+		try {
+			await setCaptainProxy({
+				variables: {
+					auctionId,
+					input: {
+						captainId: proxyModal.id,
+						osuId: Number(proxyOsuId),
+						discordId: proxyDiscordId.trim() || null,
+					},
+				},
+			});
+			toast(`Proxy set for ${proxyModal.username}`, "success");
+			setProxyModal(null);
+			setProxyOsuId("");
+			setProxyDiscordId("");
+		} catch (e: any) {
+			toast(e.message ?? "Failed to set proxy", "error");
+		}
+	}
 
 	async function run(fn: () => Promise<any>, ok: string) {
 		try {
@@ -212,11 +248,44 @@ export default function ControlPage() {
 							className="flex items-center gap-3 rounded-xl border border-white/5 bg-tuned/40 p-3"
 						>
 							<Avatar osuId={c.osuId} src={c.avatarUrl} size={36} />
-							<span className="flex-1 truncate font-semibold">{c.username}</span>
+							<div className="min-w-0 flex-1">
+									<span className="truncate font-semibold">{c.username}</span>
+									{c.proxy && (
+										<span className="ml-2 inline-flex items-center gap-1 rounded bg-amber-200/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-200">
+											<FiLink size={10} /> via {c.proxy.username ?? c.proxy.osuId}
+											{paused && (
+												<button
+													onClick={() =>
+														run(
+															() =>
+																removeCaptainProxy({
+																	variables: { auctionId, captainId: c.id },
+																}),
+															"Proxy removed",
+														)
+													}
+													title="Remove proxy"
+													className="ml-0.5 rounded p-0.5 hover:bg-deepRed/20 hover:text-deepRed"
+												>
+													<FiX size={11} />
+												</button>
+											)}
+										</span>
+									)}
+								</div>
 							<span className="font-mono text-mintGreen">
 								{formatCredits(c.balance)}
 							</span>
 							<div className="flex items-center gap-1">
+									{paused && (
+										<button
+											onClick={() => setProxyModal(c)}
+											title={c.proxy ? "Replace proxy" : "Add proxy"}
+											className="rounded-lg p-2 text-white/50 transition hover:bg-white/5 hover:text-white"
+										>
+											<FiLink size={15} />
+										</button>
+									)}
 								<input
 									type="number"
 									value={editing[c.id] ?? ""}
@@ -320,6 +389,38 @@ export default function ControlPage() {
 					})}
 				</div>
 			</section>
+
+			<Modal
+				open={!!proxyModal}
+				onClose={() => setProxyModal(null)}
+				title={`Proxy for ${proxyModal?.username}`}
+			>
+				<p className="mb-3 text-sm text-white/60">
+					A proxy bids and confirms readiness on this captain&apos;s behalf. While a
+					proxy is set, only the proxy can act — the captain is locked out. The proxy
+					must not be a player in the auction.
+				</p>
+				<input
+					value={proxyOsuId}
+					inputMode="numeric"
+					onChange={(e) => setProxyOsuId(e.target.value)}
+					placeholder="Proxy osu! user id"
+					className="mb-3 w-full rounded-lg border border-white/10 bg-deepCharcoal px-3 py-2 outline-none focus:border-mintGreen"
+				/>
+				<input
+					value={proxyDiscordId}
+					onChange={(e) => setProxyDiscordId(e.target.value)}
+					placeholder="Proxy Discord id (optional)"
+					className="mb-4 w-full rounded-lg border border-white/10 bg-deepCharcoal px-3 py-2 outline-none focus:border-mintGreen"
+				/>
+				<button
+					onClick={confirmProxy}
+					disabled={!proxyOsuId.trim()}
+					className="w-full rounded-lg bg-mintGreen py-2.5 font-bold text-deepCharcoal disabled:opacity-50"
+				>
+					Save proxy
+				</button>
+			</Modal>
 		</div>
 	);
 }

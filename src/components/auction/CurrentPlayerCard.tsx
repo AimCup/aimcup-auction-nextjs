@@ -5,6 +5,7 @@ import { Avatar } from "@/components/Avatar";
 import { CountryFlag } from "@/components/CountryFlag";
 import { CountdownRing } from "@/components/CountdownRing";
 import { BidPanel } from "@/components/auction/BidPanel";
+import { MaxBidDraw } from "@/components/auction/MaxBidDraw";
 import { formatRank } from "@/lib/format";
 import { useCountdown } from "@/lib/useCountdown";
 import { Auction, Captain, LiveAuctionState, Player } from "@/lib/types";
@@ -26,6 +27,58 @@ export function CurrentPlayerCard({
 		live.highestBid > 0
 			? stage?.biddingTimeAfterBidSeconds ?? 15
 			: stage?.biddingTimeSeconds ?? 30;
+
+	// Resolve the max-bid draw pool / winner from their ids against the live roster.
+	const maxBidderIds = live.maxBidderIds ?? [];
+	const contenders = maxBidderIds
+		.map((id) => live.captains.find((c) => c.id === id))
+		.filter((c): c is Captain => !!c);
+	const winner = live.maxBidWinnerId
+		? live.captains.find((c) => c.id === live.maxBidWinnerId) ?? null
+		: null;
+	const drawing = live.phase === "MAX_BID_DRAW";
+
+	// During the draw, dedicate the whole card to the roulette — centred and constrained to the same
+	// reel width as the stream overlay (~420px ≈ the overlay's bid card), so the animation renders 1:1.
+	if (drawing) {
+		return (
+			<div className="relative overflow-hidden rounded-2xl border border-white/10 bg-tuned">
+				{player?.bannerUrl && (
+					<div
+						className="absolute inset-0 bg-cover bg-center opacity-40"
+						style={{ backgroundImage: `url(${player.bannerUrl})` }}
+					/>
+				)}
+				<div className="absolute inset-0 bg-gradient-to-b from-deepCharcoal/70 via-deepCharcoal/85 to-tuned" />
+				<div className="relative flex min-h-[230px] flex-col items-center justify-center gap-5 p-5">
+					{player && (
+						<div className="flex items-center gap-3">
+							<Avatar
+								osuId={player.osuId}
+								src={player.avatarUrl}
+								size={44}
+								className="ring-2 ring-white/10"
+							/>
+							<div className="min-w-0">
+								<p className="text-[11px] uppercase tracking-widest text-white/40">
+									Up for auction
+								</p>
+								<h2 className="truncate text-xl font-black">{player.username}</h2>
+							</div>
+						</div>
+					)}
+					<div className="w-full max-w-[420px]">
+						<MaxBidDraw
+							candidates={contenders}
+							winner={winner}
+							player={player}
+							targetEpochMs={live.phaseEndsAtEpochMs}
+						/>
+					</div>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="relative overflow-hidden rounded-2xl border border-white/10 bg-tuned">
@@ -90,6 +143,13 @@ export function CurrentPlayerCard({
 													/>
 												)}
 											{live.phaseEndsAtEpochMs > 0 &&
+												live.phase === "MAX_BID_WINDOW" && (
+													<MaxBidBadge
+														targetEpochMs={live.phaseEndsAtEpochMs}
+														contenders={contenders.length}
+													/>
+												)}
+											{live.phaseEndsAtEpochMs > 0 &&
 												live.phase === "GAP" && (
 													<GapBadge
 														targetEpochMs={live.phaseEndsAtEpochMs}
@@ -98,7 +158,7 @@ export function CurrentPlayerCard({
 										</div>
 									</div>
 									{player.description && (
-										<p className="mt-4 max-w-prose text-sm leading-relaxed text-white/70">
+										<p className="mt-4 max-w-prose rounded-lg bg-deepCharcoal/70 px-3 py-2 text-sm leading-relaxed text-white/85 backdrop-blur-sm">
 											{player.description}
 										</p>
 									)}
@@ -124,7 +184,7 @@ export function CurrentPlayerCard({
 					</AnimatePresence>
 				</div>
 
-				{/* Right 1/3 — bid panel */}
+				{/* Right 1/3 — bid panel (the MAX_BID_DRAW phase is handled by the full-card view above) */}
 				<div className="flex-1 rounded-xl border border-white/10 bg-deepCharcoal/60 p-4 backdrop-blur-sm">
 					<BidPanel
 						auctionId={auctionId}
@@ -132,9 +192,39 @@ export function CurrentPlayerCard({
 						myCaptain={myCaptain}
 						maxBid={auction.settings.maxBid}
 						minIncrement={auction.settings.minIncrement}
+						maxTeamSize={auction.settings.maxTeamSize}
 					/>
 				</div>
 			</div>
+		</div>
+	);
+}
+
+/**
+ * Countdown shown while the max-bid window is open (other captains may counter). Mirrors GapBadge but
+ * in the "danger" accent, and surfaces how many captains are already in the draw.
+ */
+function MaxBidBadge({
+	targetEpochMs,
+	contenders,
+}: {
+	targetEpochMs: number;
+	contenders: number;
+}) {
+	const remaining = useCountdown(targetEpochMs);
+	const seconds = Math.max(0, Math.ceil(remaining / 1000));
+	return (
+		<div className="flex flex-col items-center justify-center gap-0.5 rounded-xl border border-deepRed/40 bg-deepRed/10 px-4 py-2 text-center">
+			<span className="text-[10px] font-bold uppercase tracking-widest text-deepRed">
+				Max bid
+			</span>
+			<span className="font-mono text-3xl font-black tabular-nums text-deepRed">
+				{seconds}
+				<span className="ml-0.5 text-base font-semibold text-deepRed/70">s</span>
+			</span>
+			<span className="text-[10px] text-white/50">
+				{contenders} in draw
+			</span>
 		</div>
 	);
 }
@@ -173,8 +263,8 @@ function QualifierStats({ player }: { player: Player }) {
 	return (
 		<div className="mt-4 flex flex-col gap-2">
 			{player.qualificationRank != null && (
-				<div className="flex items-center gap-2 text-sm">
-					<span className="rounded-md bg-mintGreen/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-mintGreen">
+				<div className="flex w-fit items-center gap-2 rounded-lg bg-deepCharcoal/70 px-2.5 py-1.5 text-sm backdrop-blur-sm">
+					<span className="rounded-md bg-mintGreen/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-mintGreen">
 						Qualifier rank
 					</span>
 					<span className="font-bold text-white">
@@ -218,7 +308,7 @@ function QualMapRow({
 	accuracy: string;
 }) {
 	return (
-		<div className="flex items-center gap-3 rounded-lg border border-white/10 bg-deepCharcoal/50 p-2">
+		<div className="flex items-center gap-3 rounded-lg border border-white/10 bg-deepCharcoal/70 p-2 backdrop-blur-sm">
 			{image ? (
 				// eslint-disable-next-line @next/next/no-img-element
 				<img

@@ -19,12 +19,11 @@ export function NavBar() {
 	return (
 		<header className="sticky top-0 z-50 border-b border-white/5 bg-deepCharcoal/80 backdrop-blur-md">
 			<div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between px-5">
-				<Link href="/" className="flex items-center gap-2">
-					<span className="grid h-9 w-9 place-items-center rounded-lg bg-deepRed font-black text-white">
-						A
-					</span>
+				<Link href="/" className="flex items-center gap-2.5">
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img src="/aim_logo.svg" alt="AimCup" className="h-8 w-auto" />
 					<span className="text-lg font-bold tracking-tight">
-						aimcup <span className="text-gradient font-black">auctions</span>
+						AimCup <span className="font-black text-deepRed">AUCTIONS</span>
 					</span>
 				</Link>
 

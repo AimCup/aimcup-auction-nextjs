@@ -38,6 +38,12 @@ export const CAPTAIN_FIELDS = gql`
 		balance
 		ready
 		teamPlayerIds
+		proxy {
+			osuId
+			username
+			avatarUrl
+			discordId
+		}
 	}
 `;
 
@@ -61,9 +67,11 @@ export const AUCTION_FIELDS = gql`
 			startingBalance
 			maxBid
 			minIncrement
+			maxBidWindowSeconds
 			teamSizeForPercentLimit
 			maxBidPercent
 			maxDescriptionLength
+			maxTeamSize
 		}
 		stages {
 			index
@@ -102,6 +110,8 @@ export const LIVE_FIELDS = gql`
 		highestBid
 		highestBidderId
 		highestBidderUsername
+		maxBidderIds
+		maxBidWinnerId
 		phaseEndsAtEpochMs
 		pausedByOrganizer
 		message
@@ -339,6 +349,21 @@ export const UNSET_CAPTAIN = gql`
 		unsetCaptain(auctionId: $auctionId, playerId: $playerId) {
 			...PlayerFields
 		}
+	}
+`;
+
+export const SET_CAPTAIN_PROXY = gql`
+	${AUCTION_FIELDS}
+	mutation SetCaptainProxy($auctionId: ID!, $input: SetProxyInput!) {
+		setCaptainProxy(auctionId: $auctionId, input: $input) {
+			...AuctionFields
+		}
+	}
+`;
+
+export const REMOVE_CAPTAIN_PROXY = gql`
+	mutation RemoveCaptainProxy($auctionId: ID!, $captainId: ID!) {
+		removeCaptainProxy(auctionId: $auctionId, captainId: $captainId)
 	}
 `;
 

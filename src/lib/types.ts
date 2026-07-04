@@ -2,15 +2,24 @@
 
 export type AuctionState = "SCHEDULED" | "RUNNING" | "PAUSED" | "FINISHED";
 export type PlayerStatus = "AVAILABLE" | "SOLD" | "UNSOLD";
-export type AuctionPhase = "WAITING_TO_START" | "BIDDING" | "GAP" | "PAUSED" | "FINISHED";
+export type AuctionPhase =
+	| "WAITING_TO_START"
+	| "BIDDING"
+	| "MAX_BID_WINDOW"
+	| "MAX_BID_DRAW"
+	| "GAP"
+	| "PAUSED"
+	| "FINISHED";
 
 export interface AuctionSettings {
 	startingBalance: number;
 	maxBid: number;
 	minIncrement: number;
+	maxBidWindowSeconds: number;
 	teamSizeForPercentLimit: number;
 	maxBidPercent: number;
 	maxDescriptionLength: number;
+	maxTeamSize: number;
 }
 
 export interface AuctionStage {
@@ -55,6 +64,13 @@ export interface Player {
 	worstMapAccuracy: number | null;
 }
 
+export interface CaptainProxy {
+	osuId: number;
+	username: string | null;
+	avatarUrl: string | null;
+	discordId: string | null;
+}
+
 export interface Captain {
 	id: string;
 	playerId: string;
@@ -66,6 +82,7 @@ export interface Captain {
 	balance: number;
 	ready: boolean;
 	teamPlayerIds: string[];
+	proxy: CaptainProxy | null;
 }
 
 export interface BidEvent {
@@ -108,6 +125,8 @@ export interface LiveAuctionState {
 	highestBid: number;
 	highestBidderId: string | null;
 	highestBidderUsername: string | null;
+	maxBidderIds: string[];
+	maxBidWinnerId: string | null;
 	bidHistory: BidEvent[];
 	phaseEndsAtEpochMs: number;
 	pausedByOrganizer: boolean;

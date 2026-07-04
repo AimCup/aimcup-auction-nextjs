@@ -1,4 +1,4 @@
-# Test ("next") image for next.auction.aimcup.xyz. Identical build to build.Dockerfile; the API
+# Test ("next") image for auction-next.aimcup.xyz. Identical build to build.Dockerfile; the API
 # origin differs only via the NEXT_PUBLIC_API_URL build arg supplied by docker-compose.next.yml.
 FROM node:20-alpine AS builder
 WORKDIR /app
