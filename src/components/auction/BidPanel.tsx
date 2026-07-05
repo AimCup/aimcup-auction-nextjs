@@ -35,21 +35,16 @@ export function BidPanel({
 	const [placeBid, { loading: bidding }] = useMutation(PLACE_BID);
 	const [placeMaxBid, { loading: maxing }] = useMutation(PLACE_MAX_BID);
 
-	const minNext =
-		live.highestBid > 0 ? live.highestBid + minIncrement : minIncrement;
 	const currentPlayerId = live.currentPlayer?.id ?? null;
-	const [amount, setAmount] = useState(minNext);
+	// Each captain types their own bid amount. The field is never auto-adjusted from other
+	// captains' bids — it simply opens at the minimum increment for every new player.
+	const [amount, setAmount] = useState(minIncrement);
 
-	// When a new player comes up for bidding, reset the input back to the opening minimum
-	// (otherwise it keeps the amount from the previous player, e.g. a 9000 max bid).
+	// Reset the input to the opening minimum whenever a new player comes up (and on mount),
+	// so it never carries over the previous player's amount (e.g. a 9000 max bid).
 	useEffect(() => {
 		setAmount(minIncrement);
 	}, [currentPlayerId, minIncrement]);
-
-	// While bidding on the same player, keep the field at or above the next legal bid.
-	useEffect(() => {
-		setAmount((a) => (a < minNext ? minNext : a));
-	}, [minNext]);
 
 	const maxBidders = live.maxBidderIds ?? [];
 	const inWindow = live.phase === "MAX_BID_WINDOW";
